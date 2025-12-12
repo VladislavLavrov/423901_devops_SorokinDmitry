@@ -1,5 +1,6 @@
 using Calculator.Data;
-
+using Calculator.Services;
+using Confluent.Kafka;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Options;
@@ -9,6 +10,11 @@ using System.Runtime.Intrinsics.X86;
 using static System.Net.WebRequestMethods;
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
+
+builder.Services.AddHostedService<KafkaConsumerService>();
+builder.Services.AddSingleton<KafkaProducerHandler>();
+builder.Services.AddSingleton<KafkaProducerService<Null,string>>();
+
 builder.Services.AddControllersWithViews();
 string mariadbCS = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<CalculatorContext>(options =>

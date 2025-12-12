@@ -8,8 +8,7 @@ namespace Calculator.Data
         public CalculatorContext(DbContextOptions<CalculatorContext> options) : base(options)
         {
         }
-        protected override void OnModelCreating(ModelBuilder
-       modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             //OnModelCreating(modelBuilder);
         }
