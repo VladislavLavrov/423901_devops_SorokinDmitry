@@ -10,9 +10,9 @@ namespace Calculator.Controllers
     {
         private readonly CalculatorContext _context;
         private readonly KafkaProducerService<Null,
-       string> _producer;
+        string> _producer;
         public CalculatorController(CalculatorContext
-       context, KafkaProducerService<Null, string> producer)
+        context, KafkaProducerService<Null, string> producer)
         {
             _context = context;
             _producer = producer;
@@ -36,7 +36,7 @@ namespace Calculator.Controllers
         public async Task<IActionResult> Calculate(double num1, double num2, Operation operation)
         {
             // Подготовка объекта для расчета
-            var dataInputVariant = new DataInputVariant
+            var dataInputVariant = new DataInputVariants
             {
                 Operand_1 = num1,
                 Operand_2 = num2,
@@ -47,7 +47,7 @@ namespace Calculator.Controllers
             // Перенаправление на страницу Index
             return RedirectToAction(nameof(Index));
         }
-        public IActionResult Callback([FromBody] DataInputVariant inputData)
+        public IActionResult Callback([FromBody] DataInputVariants inputData)
         {
             // Сохранение данных и результата в базе данных
         SaveDataAndResult(inputData);
@@ -61,7 +61,7 @@ namespace Calculator.Controllers
         /// <param name="operation">Тип операции (сложение, вычитание, умножение, деление).</param>
         /// <param name="result">Результат математической операции.</param>
         /// <returns>Объект с данными и результатом.</returns>
-        private DataInputVariant SaveDataAndResult(DataInputVariant inputData)
+        private DataInputVariants SaveDataAndResult(DataInputVariants inputData)
         {
             _context.DataInputVariants.Add(inputData);
             _context.SaveChanges();
@@ -72,10 +72,10 @@ namespace Calculator.Controllers
         /// </summary>
         /// <param name="dataInputVariant">Объект с данными и результатом.</param>
         /// <returns>Task.</returns>
-        private async Task SendDataToKafka(DataInputVariant dataInputVariant)
+        private async Task SendDataToKafka(DataInputVariants dataInputVariant)
         {
             var json = JsonSerializer.Serialize(dataInputVariant);
-            await _producer.ProduceAsync("lavrov", new Message<Null, string>
+            await _producer.ProduceAsync("sorokin", new Message<Null, string>
             { Value = json });
         }
     }

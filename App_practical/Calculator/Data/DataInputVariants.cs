@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using Calculator.Models;
 namespace Calculator.Data
 {
-    public class DataInputVariant
+    public class DataInputVariants
     {
         [Key]
         public int ID_DataInputVariant { get; set; } // Уникальный идентификатор для объекта DataInputVariant

@@ -59,7 +59,7 @@ namespace Calculator.Services
                     var cr = _kafkaConsumer.Consume(cancellationToken);
                     var ip = cr.Message.Value;
                     // Исходные данные
-                    var inputData = JsonSerializer.Deserialize<DataInputVariant>(cr.Message.Value);
+                    var inputData = JsonSerializer.Deserialize<DataInputVariants>(cr.Message.Value);
                     // Выполнение расчета
                     var result = CalculatorLibrary.CalculateOperation(inputData.Operand_1, inputData.Operand_2,
                    inputData.Type_operation);

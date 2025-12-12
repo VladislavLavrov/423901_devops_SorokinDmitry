@@ -3,7 +3,7 @@ namespace Calculator.Data
 {
     public class CalculatorContext : DbContext
     {
-        public DbSet<DataInputVariant> DataInputVariants
+        public DbSet<DataInputVariants> DataInputVariants
         { get; set; }
         public CalculatorContext(DbContextOptions<CalculatorContext> options) : base(options)
         {
