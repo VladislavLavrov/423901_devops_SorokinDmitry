@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Calculator.Migrations
 {
     [DbContext(typeof(CalculatorContext))]
-    [Migration("20251118065552_m_init")]
+    [Migration("20251212095257_m_init")]
     partial class m_init
     {
         /// <inheritdoc />
@@ -32,17 +32,17 @@ namespace Calculator.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ID_DataInputVariant"));
 
-                    b.Property<string>("Operand_1")
-                        .HasColumnType("varchar(128)");
+                    b.Property<double>("Operand_1")
+                        .HasColumnType("double");
 
-                    b.Property<string>("Operand_2")
-                        .HasColumnType("varchar(128)");
+                    b.Property<double>("Operand_2")
+                        .HasColumnType("double");
 
                     b.Property<string>("Result")
                         .HasColumnType("varchar(128)");
 
-                    b.Property<string>("Type_operation")
-                        .HasColumnType("varchar(128)");
+                    b.Property<int>("Type_operation")
+                        .HasColumnType("int");
 
                     b.HasKey("ID_DataInputVariant");
 
