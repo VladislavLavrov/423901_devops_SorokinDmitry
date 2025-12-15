@@ -1,40 +1,38 @@
+using Calculator.Data;
+using Calculator.Models;
+
 using Microsoft.AspNetCore.Mvc;
 namespace Calculator.Controllers
 {
-    public enum Operation
-    {
-        Add, Subtract, Multiply, Divide
-    }
     public class CalculatorController : Controller
     {
-        [HttpGet]
-        public IActionResult Index()
+        public CalculatorController()
         {
-            return View();
         }
-        [HttpPost]
+        /// <summary>
+        /// Отображение страницы Index.
+        /// </summary>
+        public IActionResult Index() => View();
+        /// <summary>
+        /// Обработка запроса на вычисление.
+        /// </summary>
+        /// <param name="num1">Первый операнд.</param>
+        /// <param name="num2">Второй операнд.</param>
+        /// <param name="operation">Тип операции (сложение, вычитание, умножение, деление).</param>
+[       HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Calculate(double num1, double
-        num2, Operation operation)
+        public IActionResult Index(double num1, double num2, Operation operation)
         {
-            double result = 0;
-            switch (operation)
+            // Подготовка объекта для расчета
+            var dataInputVariant = new DataInputVariants
             {
-                case Operation.Add:
-                    result = num1 + num2;
-                    break;
-                case Operation.Subtract:
-                    result = num1 - num2;
-                    break;
-            case Operation.Multiply:
-                    result = num1 * num2;
-                    break;
-                case Operation.Divide:
-                    result = num1 / num2;
-                    break;
-            }
-            ViewBag.Result = result;
-            return View("Index");
+                Operand_1 = num1,
+                Operand_2 = num2,
+                Type_operation = operation,
+            };
+            ViewBag.Result = CalculatorLibrary.CalculateOperation(num1, num2, operation).ToString();
+            // Перенаправление на страницу Index
+            return View();
         }
     }
 }

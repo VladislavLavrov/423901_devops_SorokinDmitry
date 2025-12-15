@@ -1,8 +1,10 @@
-﻿@{
-ViewData["Title"] = "Simple Calculator";
+﻿@model List<Calculator.Data.DataInputVariants>
+@{
+ViewData["Title"] = "Простой калькулятор";
 }
 <h2>@ViewData["Title"]</h2>
-<form method="post" asp-controller="Calculator" asp-action="Calculate">
+<form method="post" asp-controller="Calculator" asp-ac-
+tion="Index">
 @Html.AntiForgeryToken()
 <input type="text" name="num1" required />
 <select name="operation" required>
@@ -12,9 +14,9 @@ ViewData["Title"] = "Simple Calculator";
 <option value="Divide">/</option>
 </select>
 <input type="text" name="num2" required />
-<input type="submit" value="Calculate" />
+    <input type="submit" value="Рассчитать" />
 </form>
-@if (ViewBag.Result != null)
+@if (!string.IsNullOrEmpty(ViewBag.Result))
 {
-<h3>Result: @ViewBag.Result</h3>
+    <p>Результат операции: @ViewBag.Result</p>
 }
