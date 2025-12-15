@@ -9,10 +9,8 @@ namespace Calculator.Controllers
     public class CalculatorController : Controller
     {
         private readonly CalculatorContext _context;
-        private readonly KafkaProducerService<Null,
-        string> _producer;
-        public CalculatorController(CalculatorContext
-        context, KafkaProducerService<Null, string> producer)
+        private readonly KafkaProducerService<Null, string> _producer;
+        public CalculatorController(CalculatorContext context, KafkaProducerService<Null, string> producer)
         {
             _context = context;
             _producer = producer;
@@ -50,7 +48,7 @@ namespace Calculator.Controllers
         public IActionResult Callback([FromBody] DataInputVariants inputData)
         {
             // Сохранение данных и результата в базе данных
-        SaveDataAndResult(inputData);
+            SaveDataAndResult(inputData);
             return Ok();
         }
         /// <summary>

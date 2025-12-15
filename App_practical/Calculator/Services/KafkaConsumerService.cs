@@ -25,16 +25,14 @@ namespace Calculator.Services
         private readonly IConsumer<Null, string> _kafkaConsumer;
         private readonly IServiceProvider _serviceProvider;
         private readonly IHttpClientFactory _clientFactory;
-        public KafkaConsumerService(IConfiguration config, IServiceProvider serviceProvider, IHttpClientFactory
-        clientFactory)
+        public KafkaConsumerService(IConfiguration config, IServiceProvider serviceProvider, IHttpClientFactory clientFactory)
         {
             // Конфигурирование настроек Kafka и инициализация компонентов
             var consumerConfig = new ConsumerConfig();
             config.GetSection("Kafka:ConsumerSettings").
             Bind(consumerConfig);
             _topic = config.GetValue<string>("Kafka:TopicName");
-            _kafkaConsumer = new ConsumerBuilder<Null,
-            string>(consumerConfig).Build();
+            _kafkaConsumer = new ConsumerBuilder<Null, string>(consumerConfig).Build();
             _serviceProvider = serviceProvider;
             _clientFactory = clientFactory;
         }
@@ -61,12 +59,12 @@ namespace Calculator.Services
                     // Исходные данные
                     var inputData = JsonSerializer.Deserialize<DataInputVariants>(cr.Message.Value);
                     // Выполнение расчета
-                    var result = CalculatorLibrary.CalculateOperation(inputData.Operand_1, inputData.Operand_2,
-                   inputData.Type_operation);
+                    var result = CalculatorLibrary.CalculateOperation(inputData.Operand_1, inputData.Operand_2, inputData.Type_operation);
                     inputData.Result = result.ToString();
                     var httpClient = _clientFactory.CreateClient();
                     // Заменить последние 2 цифры порта на порядковый номер из студенческого журнала.
-                    // Например, порт 5012 соответствует номеру 12 await httpClient.PostAsJsonAsync($"http://localhost:5015/Calculator/Callback", inputData);
+                    // Например, порт 5012 соответствует номеру 12
+                    await httpClient.PostAsJsonAsync($"http://localhost:5015/Calculator/Callback", inputData);
                     // Обработка сообщения...
                     Console.WriteLine($"Message key: {cr.Message.Key}, value: {cr.Message.Value}");
                 }

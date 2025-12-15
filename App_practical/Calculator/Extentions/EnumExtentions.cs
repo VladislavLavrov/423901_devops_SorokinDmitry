@@ -15,7 +15,9 @@ namespace Calculator.Extension
             return val.GetType()
             .GetMember(val.ToString())
             .FirstOrDefault()
-            ?.GetCustomAttribute<DisplayAttribute>(false)?.Name?? val.ToString();
+            ?.GetCustomAttribute<DisplayAttribute>(false)
+            ?.Name
+            ?? val.ToString();
         }
     }
 }

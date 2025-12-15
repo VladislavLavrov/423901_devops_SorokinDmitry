@@ -17,7 +17,8 @@ namespace Calculator.Models
                 Operation.Add => num1 + num2,
                 Operation.Subtract => num1 - num2,
                 Operation.Multiply => num1 * num2,
-                Operation.Divide => num1 / num2, _ => throw new ArgumentOutOfRangeException(nameof(operation), "Invalid operation"),
+                Operation.Divide => num1 / num2,
+                _ => throw new ArgumentOutOfRangeException(nameof(operation), "Invalid operation"),
             };
         }
     }
