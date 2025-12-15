@@ -1,7 +1,54 @@
 services:
- web:
-  container_name: web-app-calculator-jenkins-15
-  hostname: app
-  build: Calculator/
-  ports:
-   - "0.0.0.0:5215:5015"
+  web:
+    container_name: 15-calculator-web
+    hostname: app
+    build: .
+    ports:
+      - "5015:5015"
+    networks:
+      - metrics-net-15
+
+  prometheus:
+    image: prom/prometheus:latest
+    user: root
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/config/:/etc/prometheus/
+      - ./prometheus/data:/prometheus:rw
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9115:9090"
+    depends_on:
+      - web
+    networks:
+      - metrics-net-15
+
+  renderer:
+    image: grafana/grafana-image-renderer:latest
+    ports:
+      - 5115:8081
+    networks:
+      - metrics-net-15
+      
+  grafana:
+    image: grafana/grafana:latest
+    user: root
+    depends_on:
+      - prometheus
+      - renderer
+    ports:
+      - "3015:3000"      
+    volumes:
+      - ./grafana/data:/var/lib/grafana:rw
+    environment:
+      GF_RENDERING_SERVER_URL: http://renderer:9000/render
+      GF_RENDERING_CALLBACK_URL: http://grafana:3000/
+      GF_LOG_FILTERS: rendering:debug
+    networks:
+      - metrics-net-15
+
+networks:
+  metrics-net-16:
+    name: metrics-net-15
