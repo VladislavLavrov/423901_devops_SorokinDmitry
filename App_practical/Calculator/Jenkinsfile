@@ -1,22 +1,25 @@
 pipeline {
- agent any
-
- stages {
-  stage('Hello') {
-   steps {
-    echo 'Hello jenkins'
-   }
-  }
-  stage('Build Docker Image') {
-   steps {
-    sh 'ls -l'
-    sh 'docker compose build'
-   }
-  }
-  stage('Start Docker Container') {
-   steps {
-    sh 'docker compose up -d'
-   }
-  }
- }
+    agent any
+    stages {
+        stage('Hello') {
+            steps {
+                echo 'Hello jenkins'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                dir('App_practical/Calculator') {
+                    sh 'ls -l'
+                    sh 'docker compose build'
+                }
+            }
+        }
+        stage('Start Docker Container') {
+            steps {
+                dir('App_practical/Calculator') {
+                    sh 'docker compose up -d'
+                }
+            }
+        }
+    }
 }
