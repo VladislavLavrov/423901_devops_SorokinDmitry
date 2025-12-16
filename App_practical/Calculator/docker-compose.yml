@@ -28,7 +28,7 @@ services:
   renderer:
     image: grafana/grafana-image-renderer:latest
     ports:
-      - 5115:8081
+      - "5115:8081"
     networks:
       - metrics-net-15
       
