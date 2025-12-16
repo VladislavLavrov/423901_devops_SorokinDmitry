@@ -7,7 +7,7 @@ services:
       - "5015:5015"
     networks:
       - metrics-net-15
-
+      
   prometheus:
     image: prom/prometheus:latest
     user: root
@@ -24,7 +24,7 @@ services:
       - web
     networks:
       - metrics-net-15
-
+      
   renderer:
     image: grafana/grafana-image-renderer:latest
     ports:
@@ -48,7 +48,7 @@ services:
       GF_LOG_FILTERS: rendering:debug
     networks:
       - metrics-net-15
-
+      
 networks:
   metrics-net-15:
     name: metrics-net-15
