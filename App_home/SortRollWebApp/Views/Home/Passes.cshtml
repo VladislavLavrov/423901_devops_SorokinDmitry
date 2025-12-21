@@ -1,0 +1,928 @@
+﻿@{
+    ViewData["Title"] = "Калибровка и ввод начальных параметров";
+}
+
+<style>
+    /* Стили для таблицы */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type="number"] {
+        -moz-appearance: textfield;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .table input.form-control {
+        padding: 0.25rem;
+        height: 30px;
+        font-size: 0.875rem;
+    }
+
+    .table td {
+        padding: 0.3rem;
+        vertical-align: middle;
+    }
+
+    .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+        margin: 1px;
+    }
+
+    .view-mode, .edit-mode {
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+    .view-mode .btn, .edit-mode .btn {
+        margin: 0 2px;
+        display: inline-block;
+    }
+
+    /* Стили для выделения строк */
+    .selected {
+        background-color: #d4edda !important;
+    }
+
+    .steel-selected {
+        background-color: #d4edda !important;
+    }
+</style>
+
+<h2>@ViewData["Title"]</h2>
+
+<div style="border: 1px solid #ddd; border-radius: 4px; padding: 10px; background-color: #fafafa; font-size: 14px;">
+    <div style="display: flex; gap: 20px;">
+        <div><strong>Завод:</strong> @ViewBag.FactoryName</div>
+        <div><strong>Стан:</strong> @ViewBag.MillName</div>
+        <div><strong>Профиль:</strong> @ViewBag.SectionName</div>
+    </div>
+</div>
+
+<!-- Расшифровка кодов калибров -->
+<div style="margin-top: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; background-color: #f9f9f9; font-size: 14px;">
+    <strong>Расшифровка кодов калибров:</strong>
+    <div>
+        1 - гладкая бочка,
+        2 - круглый,
+        3 - квадратный,
+        4 - овальный,
+        5 - пл. овальный,
+        6 - шестиугольный,
+        7 - ромбический,
+        8 - ящичный,
+        9 - ребр. овальный,
+        10 - шестигранный,
+        11 – ребровой
+    </div>
+</div>
+
+<!-- Таблица калибровки валков -->
+<div id="passesContainer" class="mt-4">
+    <h4>Калибровка валков</h4>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>N</th>
+                    <th>SchemaInput</th>
+                    <th>SchemaCaliber</th>
+                    <th>Schema</th>
+                    <th>H0</th>
+                    <th>B0</th>
+                    <th>H1</th>
+                    <th>B1</th>
+                    <th>W</th>
+                    <th>S</th>
+                    <th>BVR</th>
+                    <th>BD</th>
+                    <th>R</th>
+                    <th>ROV</th>
+                    <th>R8</th>
+                    <th>SUMX</th>
+                    <th>PSI</th>
+                    <th>Z</th>
+                    <th>SP</th>
+                    <th>TOP</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody id="passesTableBody">
+                <!-- Строки будут добавляться динамически -->
+            </tbody>
+        </table>
+    </div>
+    <button id="addPassButton" class="btn btn-primary mt-3">Добавить проход</button>
+</div>
+
+<!-- Таблица начальных параметров -->
+<div id="initialParamsContainer" class="mt-4">
+    <h4>Начальные параметры</h4>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>W0</th>
+                    <th>P0</th>
+                    <th>L0</th>
+                    <th>T0</th>
+                    <th>TAU</th>
+                    <th>TAU0</th>
+                    <th>LR</th>
+                    <th>VK</th>
+                    <th>T0min</th>
+                    <th>T0max</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody id="initialParamsTableBody">
+                <!-- Строки будут добавляться динамически -->
+            </tbody>
+        </table>
+    </div>
+    <button id="addInitialParamButton" class="btn btn-primary mt-3">Добавить набор параметров</button>
+</div>
+
+<!-- Таблица сопротивления деформации -->
+<div id="steelContainer" class="mt-4">
+    <h4>Сопротивление деформации</h4>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Код стали</th>
+                    <th>K1</th>
+                    <th>K2</th>
+                    <th>K3</th>
+                    <th>K4</th>
+                    <th>K5</th>
+                    <th>K6</th>
+                    <th>K7</th>
+                    <th>K8</th>
+                    <th>K9</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody id="steelTableBody">
+                <!-- Строки будут добавляться динамически -->
+            </tbody>
+        </table>
+    </div>
+    <button id="addSteelButton" class="btn btn-primary mt-3">Добавить сталь</button>
+</div>
+
+<!-- Кнопка для перехода к расчетам -->
+<div class="mt-4">
+    <button id="calculateButton" class="btn btn-success">Расчеты</button>
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+        // Переменные для хранения выбранных id
+        var factoryId = @ViewBag.FactoryId;
+        var millId = @ViewBag.MillId;
+        var sectionId = @ViewBag.SectionId;
+
+        // Переменные для хранения выбранных элементов
+        var selectedInitialParamId = 0;
+        var selectedSteelId = 0;
+
+        // Функция форматирования чисел
+        function formatNumber(value) {
+            if (value === undefined || value === null) return '0';
+
+            // Округляем до 3 знаков после запятой и убираем лишние нули
+            return parseFloat(value.toFixed(3)).toString();
+        }
+
+        // Загрузка всех таблиц при инициализации
+        $(document).ready(function() {
+            loadPassesTable(sectionId);
+            loadInitialParamsTable(sectionId);
+            loadSteelTable();
+        });
+
+        // Загрузка таблицы проходов
+        function loadPassesTable(sectionId) {
+            $.getJSON('@Url.Action("GetPasses", "Home")', { sectionId: sectionId }, function (passes) {
+                $('#passesTableBody').empty();
+                passes.forEach(function (pass) {
+                    addPassRow(pass);
+                });
+            });
+        }
+
+        // Загрузка таблицы начальных параметров
+        function loadInitialParamsTable(sectionId) {
+            $.getJSON('@Url.Action("GetInitialParams", "Home")', { sectionId: sectionId }, function (params) {
+                $('#initialParamsTableBody').empty();
+                params.forEach(function (param) {
+                    addInitialParamRow(param);
+                });
+            });
+        }
+
+        // Загрузка таблицы сталей
+        function loadSteelTable() {
+            $.getJSON('@Url.Action("GetSteels", "Home")', function (steels) {
+                $('#steelTableBody').empty();
+                steels.forEach(function (steel) {
+                    addSteelRow(steel);
+                });
+            });
+        }
+
+        // Добавление строки прохода
+        function addPassRow(pass) {
+            var isNew = pass.id === 0;
+            var rowId = isNew ? 'pass-new' : 'pass-' + pass.id;
+
+            var row = '<tr id="' + rowId + '" data-section-id="' + sectionId + '">';
+
+            // Добавляем ячейки с данными
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="N" step="1" value="0" />' : pass.n) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="SchemaInput" step="1" value="0" />' : pass.schemaInput) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="SchemaCaliber" step="1" value="0" />' : pass.schemaCaliber) + '</td>';
+            // Schema - вычисляемое поле, только для отображения
+            row += '<td>' + (isNew ? '' : pass.schema) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="H0" step="0.001" value="0" />' : formatNumber(pass.h0)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="B0" step="0.001" value="0" />' : formatNumber(pass.b0)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="H1" step="0.001" value="0" />' : formatNumber(pass.h1)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="B1" step="0.001" value="0" />' : formatNumber(pass.b1)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="W" step="0.001" value="0" />' : formatNumber(pass.w)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="S" step="0.001" value="0" />' : formatNumber(pass.s)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="BVR" step="0.001" value="0" />' : formatNumber(pass.bvr)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="BD" step="0.001" value="0" />' : formatNumber(pass.bd)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="R" step="0.001" value="0" />' : formatNumber(pass.r)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="ROV" step="0.001" value="0" />' : formatNumber(pass.rov)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="R8" step="0.001" value="0" />' : formatNumber(pass.r8)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="SUMX" step="0.001" value="0" />' : formatNumber(pass.sumx)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="PSI" step="0.001" value="0" />' : formatNumber(pass.psi)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="Z" step="0.001" value="0" />' : formatNumber(pass.z)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="SP" step="0.001" value="0" />' : formatNumber(pass.sp)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="TOP" step="0.001" value="0" />' : formatNumber(pass.top)) + '</td>';
+
+            // Добавляем кнопки действий
+            row += '<td>';
+            if (isNew) {
+                row += '<button class="btn btn-success btn-sm" onclick="saveNewPass()">Сохранить</button>';
+            } else {
+                row += '<div class="view-mode">';
+                row += '<button class="btn btn-warning btn-sm" onclick="enableEditPass(' + pass.id + ')">Изменить</button>';
+                row += '<button class="btn btn-danger btn-sm" onclick="deletePass(' + pass.id + ')">Удалить</button>';
+                row += '</div>';
+                row += '<div class="edit-mode" style="display:none">';
+                row += '<button class="btn btn-success btn-sm" onclick="savePass(' + pass.id + ')">Сохранить</button>';
+                row += '</div>';
+            }
+            row += '</td>';
+
+            row += '</tr>';
+
+            $('#passesTableBody').append(row);
+        }
+
+        // Добавление строки начальных параметров
+        function addInitialParamRow(param) {
+            var isNew = param.id === 0;
+            var rowId = isNew ? 'initialparam-new' : 'initialparam-' + param.id;
+
+            var row = '<tr id="' + rowId + '" data-section-id="' + sectionId + '"';
+            if (param.id === selectedInitialParamId) {
+                row += ' class="selected"';
+            }
+            row += '>';
+
+            // Добавляем ячейки с данными
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="W0" step="0.001" value="0" />' : formatNumber(param.w0)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="P0" step="0.001" value="0" />' : formatNumber(param.p0)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="L0" step="0.001" value="0" />' : formatNumber(param.l0)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="T0" step="0.001" value="0" />' : formatNumber(param.t0)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="TAU" step="0.001" value="0" />' : formatNumber(param.tau)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="TAU0" step="0.001" value="0" />' : formatNumber(param.taU0)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="LR" step="0.001" value="0" />' : formatNumber(param.lr)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="VK" step="0.001" value="0" />' : formatNumber(param.vk)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="T0min" step="0.001" value="0" />' : formatNumber(param.t0min)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="T0max" step="0.001" value="0" />' : formatNumber(param.t0max)) + '</td>';
+
+            // Добавляем кнопки действий
+            row += '<td>';
+            if (isNew) {
+                row += '<button class="btn btn-success btn-sm" onclick="saveNewInitialParam()">Сохранить</button>';
+            } else {
+                row += '<div class="view-mode">';
+                row += '<button class="btn btn-warning btn-sm" onclick="enableEditInitialParam(' + param.id + ')">Изменить</button>';
+                row += '<button class="btn btn-danger btn-sm" onclick="deleteInitialParam(' + param.id + ')">Удалить</button>';
+                row += '</div>';
+                row += '<div class="edit-mode" style="display:none">';
+                row += '<button class="btn btn-success btn-sm" onclick="saveInitialParam(' + param.id + ')">Сохранить</button>';
+                row += '</div>';
+            }
+            row += '</td>';
+
+            row += '</tr>';
+
+            $('#initialParamsTableBody').append(row);
+
+            // Добавляем обработчик клика для выделения строки
+            if (!isNew) {
+                $('#' + rowId).click(function(e) {
+                    if (!$(e.target).is('button') && !$(e.target).closest('.view-mode').length && !$(e.target).closest('.edit-mode').length) {
+                        $('#initialParamsTableBody tr').removeClass('selected');
+                        $(this).addClass('selected');
+                        selectedInitialParamId = param.id;
+                    }
+                });
+            }
+
+            console.log('param:', param);
+        }
+
+        // Добавление строки стали
+        function addSteelRow(steel) {
+            var isNew = steel.id === 0;
+            var rowId = isNew ? 'steel-new' : 'steel-' + steel.id;
+
+            var row = '<tr id="' + rowId + '"';
+            if (steel.id === selectedSteelId) {
+                row += ' class="steel-selected"';
+            }
+            row += '>';
+
+            // Добавляем ячейки с данными
+            row += '<td>' + (isNew ? '<input type="text" class="form-control" name="Name" value="" />' : steel.name) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="SteelCode" step="0.001" value="0" />' : formatNumber(steel.steelCode)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="K1" step="0.001" value="0" />' : formatNumber(steel.k1)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="K2" step="0.001" value="0" />' : formatNumber(steel.k2)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="K3" step="0.001" value="0" />' : formatNumber(steel.k3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="K4" step="0.001" value="0" />' : formatNumber(steel.k4)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="K5" step="0.001" value="0" />' : formatNumber(steel.k5)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="K6" step="0.001" value="0" />' : formatNumber(steel.k6)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="K7" step="0.001" value="0" />' : formatNumber(steel.k7)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="K8" step="0.001" value="0" />' : formatNumber(steel.k8)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="K9" step="0.001" value="0" />' : formatNumber(steel.k9)) + '</td>';
+
+            // Добавляем кнопки действий
+            row += '<td>';
+            if (isNew) {
+                row += '<button class="btn btn-success btn-sm" onclick="saveNewSteel()">Сохранить</button>';
+            } else {
+                row += '<div class="view-mode">';
+                row += '<button class="btn btn-warning btn-sm" onclick="enableEditSteel(' + steel.id + ')">Изменить</button>';
+                row += '<button class="btn btn-danger btn-sm" onclick="deleteSteel(' + steel.id + ')">Удалить</button>';
+                row += '</div>';
+                row += '<div class="edit-mode" style="display:none">';
+                row += '<button class="btn btn-success btn-sm" onclick="saveSteel(' + steel.id + ')">Сохранить</button>';
+                row += '</div>';
+            }
+            row += '</td>';
+
+            row += '</tr>';
+
+            $('#steelTableBody').append(row);
+
+            // Добавляем обработчик клика для выделения строки
+            if (!isNew) {
+                $('#' + rowId).click(function(e) {
+                    if (!$(e.target).is('button') && !$(e.target).closest('.view-mode').length && !$(e.target).closest('.edit-mode').length) {
+                        $('#steelTableBody tr').removeClass('steel-selected');
+                        $(this).addClass('steel-selected');
+                        selectedSteelId = steel.id;
+                    }
+                });
+            }
+        }
+
+        // Добавление нового набора начальных параметров
+        $('#addInitialParamButton').click(function() {
+            var newParam = {
+                id: 0,
+                w0: 0,
+                p0: 0,
+                l0: 0,
+                t0: 0,
+                tau: 0,
+                tau0: 0,
+                lr: 0,
+                vk: 0,
+                t0min: 0,
+                t0max: 0
+            };
+            addInitialParamRow(newParam);
+        });
+
+        // Добавление новой стали
+        $('#addSteelButton').click(function() {
+            var newSteel = {
+                id: 0,
+                name: "",
+                steelCode: 0,
+                k1: 0,
+                k2: 0,
+                k3: 0,
+                k4: 0,
+                k5: 0,
+                k6: 0,
+                k7: 0,
+                k8: 0,
+                k9: 0
+            };
+            addSteelRow(newSteel);
+        });
+
+        // Добавление нового прохода
+        $('#addPassButton').click(function() {
+            var newPass = {
+                id: 0,
+                n: 0,
+                schemaInput: 0,
+                schemaCaliber: 0,
+                h0: 0,
+                b0: 0,
+                h1: 0,
+                b1: 0,
+                w: 0,
+                s: 0,
+                bvr: 0,
+                bd: 0,
+                r: 0,
+                rov: 0,
+                r8: 0,
+                sumx: 0,
+                psi: 0,
+                z: 0,
+                sp: 0,
+                top: 0
+            };
+            addPassRow(newPass);
+        });
+
+        // Включение режима редактирования для начальных параметров
+        function enableEditInitialParam(id) {
+            var row = $('#initialparam-' + id);
+            row.find('.view-mode').hide();
+            row.find('.edit-mode').show();
+
+            // Заменяем текст на поля ввода
+            row.find('td:not(:last-child)').each(function(index) {
+                var value = $.trim($(this).text());
+                if (value === '') value = '0';
+
+                var fieldNames = ['W0', 'P0', 'L0', 'T0', 'TAU', 'TAU0', 'LR', 'VK', 'T0min', 'T0max'];
+                var fieldName = fieldNames[index];
+
+                var inputHtml = '<input type="number" class="form-control" name="' + fieldName + '" ';
+                inputHtml += 'step="0.001" ';
+                inputHtml += 'value="' + value + '" />';
+
+                $(this).html(inputHtml);
+            });
+        }
+
+        // Включение режима редактирования для стали
+        function enableEditSteel(id) {
+            var row = $('#steel-' + id);
+            row.find('.view-mode').hide();
+            row.find('.edit-mode').show();
+
+            // Заменяем текст на поля ввода
+            row.find('td:not(:last-child)').each(function(index) {
+                var value = $.trim($(this).text());
+                if (value === '') value = index === 0 ? '' : '0';
+
+                var fieldNames = ['Name', 'SteelCode', 'K1', 'K2', 'K3', 'K4', 'K5', 'K6', 'K7', 'K8', 'K9'];
+                var fieldName = fieldNames[index];
+
+                var inputHtml = '';
+                if (fieldName === 'Name') {
+                    inputHtml = '<input type="text" class="form-control" name="' + fieldName + '" ';
+                    inputHtml += 'value="' + value + '" />';
+                } else {
+                    inputHtml = '<input type="number" class="form-control" name="' + fieldName + '" ';
+                    inputHtml += 'step="0.001" ';
+                    inputHtml += 'value="' + value + '" />';
+                }
+
+                $(this).html(inputHtml);
+            });
+        }
+
+        // Включение режима редактирования для прохода
+        function enableEditPass(id) {
+            var row = $('#pass-' + id);
+            row.find('.view-mode').hide();
+            row.find('.edit-mode').show();
+
+            // Заменяем текст на поля ввода
+            row.find('td:not(:last-child)').each(function(index) {
+                // Пропускаем столбец Schema (индекс 3), так как он вычисляемый
+                if (index === 3) return;
+
+                var value = $.trim($(this).text());
+                if (value === '') value = '0';
+
+                // Корректируем индекс для fieldNames, чтобы пропустить столбец Schema
+                var adjustedIndex = index > 3 ? index - 1 : index;
+
+                var fieldNames = ['N', 'SchemaInput', 'SchemaCaliber', 'H0', 'B0', 'H1', 'B1', 'W', 'S', 'BVR', 'BD', 'R', 'ROV', 'R8', 'SUMX', 'PSI', 'Z', 'SP', 'TOP'];
+                var fieldName = fieldNames[adjustedIndex];
+
+                var inputHtml = '<input type="number" class="form-control" name="' + fieldName + '" ';
+                inputHtml += 'step="' + (fieldName === 'N' || fieldName === 'SchemaInput' || fieldName === 'SchemaCaliber' ? '1' : '0.001') + '" ';
+                inputHtml += 'value="' + value + '" />';
+
+                $(this).html(inputHtml);
+            });
+        }
+
+        // Сохранение изменений начальных параметров
+        function saveInitialParam(id) {
+            var row = $('#initialparam-' + id);
+            var paramData = {
+                Id: id,
+                IdSteelSection: sectionId
+            };
+
+            // Собираем данные из полей ввода
+            var valid = true;
+            row.find('input').each(function() {
+                var fieldName = $(this).attr('name');
+                var value = parseFloat($(this).val());
+
+                if (isNaN(value)) {
+                    alert('Поле ' + fieldName + ' должно содержать число');
+                    valid = false;
+                    return false;
+                }
+
+                paramData[fieldName] = value;
+            });
+
+            if (!valid) return;
+
+            $.ajax({
+                url: '@Url.Action("SaveInitialParam", "Home")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(paramData),
+                success: function(response) {
+                    // Удаляем старую строку и добавляем обновленную
+                    row.remove();
+                    addInitialParamRow(response);
+                },
+                error: function(xhr) {
+                    try {
+                        var error = JSON.parse(xhr.responseText);
+                        if (error && error.errors) {
+                            var errorMsg = '';
+                            for (var key in error.errors) {
+                                errorMsg += error.errors[key].join(', ') + '\n';
+                            }
+                            alert('Ошибка сохранения: ' + errorMsg);
+                        } else {
+                            alert('Ошибка сохранения: ' + xhr.responseText);
+                        }
+                    } catch (e) {
+                        alert('Ошибка сохранения: ' + xhr.responseText);
+                    }
+                }
+            });
+        }
+
+        // Сохранение новой строки начальных параметров
+        function saveNewInitialParam() {
+            var row = $('#initialparam-new');
+            var paramData = {
+                Id: 0,
+                IdSteelSection: sectionId
+            };
+
+            // Собираем данные из полей ввода
+            var valid = true;
+            row.find('input').each(function() {
+                var fieldName = $(this).attr('name');
+                var value = parseFloat($(this).val());
+
+                if (isNaN(value)) {
+                    alert('Поле ' + fieldName + ' должно содержать число');
+                    valid = false;
+                    return false;
+                }
+
+                paramData[fieldName] = value;
+            });
+
+            if (!valid) return;
+
+            $.ajax({
+                url: '@Url.Action("SaveInitialParam", "Home")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(paramData),
+                success: function(response) {
+                    // Удаляем временную строку и добавляем сохраненную
+                    row.remove();
+                    addInitialParamRow(response);
+                },
+                error: function(xhr) {
+                    try {
+                        var error = JSON.parse(xhr.responseText);
+                        if (error && error.errors) {
+                            var errorMsg = '';
+                            for (var key in error.errors) {
+                                errorMsg += error.errors[key].join(', ') + '\n';
+                            }
+                            alert('Ошибка сохранения: ' + errorMsg);
+                        } else {
+                            alert('Ошибка сохранения: ' + xhr.responseText);
+                        }
+                    } catch (e) {
+                        alert('Ошибка сохранения: ' + xhr.responseText);
+                    }
+                }
+            });
+        }
+
+        // Сохранение изменений стали
+        function saveSteel(id) {
+            var row = $('#steel-' + id);
+            var steelData = {
+                Id: id
+            };
+
+            // Собираем данные из полей ввода
+            var valid = true;
+            row.find('input').each(function() {
+                var fieldName = $(this).attr('name');
+                var value = fieldName === 'Name' ? $(this).val() : parseFloat($(this).val());
+
+                if (fieldName !== 'Name' && isNaN(value)) {
+                    alert('Поле ' + fieldName + ' должно содержать число');
+                    valid = false;
+                    return false;
+                }
+
+                steelData[fieldName] = value;
+            });
+
+            if (!valid) return;
+
+            $.ajax({
+                url: '@Url.Action("SaveSteel", "Home")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(steelData),
+                success: function(response) {
+                    // Удаляем старую строку и добавляем обновленную
+                    row.remove();
+                    addSteelRow(response);
+                },
+                error: function(xhr) {
+                    try {
+                        var error = JSON.parse(xhr.responseText);
+                        if (error && error.errors) {
+                            var errorMsg = '';
+                            for (var key in error.errors) {
+                                errorMsg += error.errors[key].join(', ') + '\n';
+                            }
+                            alert('Ошибка сохранения: ' + errorMsg);
+                        } else {
+                            alert('Ошибка сохранения: ' + xhr.responseText);
+                        }
+                    } catch (e) {
+                        alert('Ошибка сохранения: ' + xhr.responseText);
+                    }
+                }
+            });
+        }
+
+        // Сохранение новой стали
+        function saveNewSteel() {
+            var row = $('#steel-new');
+            var steelData = {
+                Id: 0
+            };
+
+            // Собираем данные из полей ввода
+            var valid = true;
+            row.find('input').each(function() {
+                var fieldName = $(this).attr('name');
+                var value = fieldName === 'Name' ? $(this).val() : parseFloat($(this).val());
+
+                if (fieldName !== 'Name' && isNaN(value)) {
+                    alert('Поле ' + fieldName + ' должно содержать число');
+                    valid = false;
+                    return false;
+                }
+
+                steelData[fieldName] = value;
+            });
+
+            if (!valid) return;
+
+            $.ajax({
+                url: '@Url.Action("SaveSteel", "Home")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(steelData),
+                success: function(response) {
+                    // Удаляем временную строку и добавляем сохраненную
+                    row.remove();
+                    addSteelRow(response);
+                },
+                error: function(xhr) {
+                    try {
+                        var error = JSON.parse(xhr.responseText);
+                        if (error && error.errors) {
+                            var errorMsg = '';
+                            for (var key in error.errors) {
+                                errorMsg += error.errors[key].join(', ') + '\n';
+                            }
+                            alert('Ошибка сохранения: ' + errorMsg);
+                        } else {
+                            alert('Ошибка сохранения: ' + xhr.responseText);
+                        }
+                    } catch (e) {
+                        alert('Ошибка сохранения: ' + xhr.responseText);
+                    }
+                }
+            });
+        }
+
+        // Сохранение изменений прохода
+        function savePass(id) {
+            var row = $('#pass-' + id);
+            var passData = {
+                Id: id,
+                IdSteelSection: sectionId
+            };
+
+            // Собираем данные из полей ввода
+            var valid = true;
+            row.find('input').each(function() {
+                var fieldName = $(this).attr('name');
+                var value = parseFloat($(this).val());
+
+                if (isNaN(value)) {
+                    alert('Поле ' + fieldName + ' должно содержать число');
+                    valid = false;
+                    return false;
+                }
+
+                passData[fieldName] = value;
+            });
+
+            if (!valid) return;
+
+            $.ajax({
+                url: '@Url.Action("SavePass", "Home")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(passData),
+                success: function(response) {
+                    // Удаляем старую строку и добавляем обновленную
+                    row.remove();
+                    addPassRow(response);
+                },
+                error: function(xhr) {
+                    try {
+                        var error = JSON.parse(xhr.responseText);
+                        if (error && error.errors) {
+                            var errorMsg = '';
+                            for (var key in error.errors) {
+                                errorMsg += error.errors[key].join(', ') + '\n';
+                            }
+                            alert('Ошибка сохранения: ' + errorMsg);
+                        } else {
+                            alert('Ошибка сохранения: ' + xhr.responseText);
+                        }
+                    } catch (e) {
+                        alert('Ошибка сохранения: ' + xhr.responseText);
+                    }
+                }
+            });
+        }
+
+        // Сохранение нового прохода
+        function saveNewPass() {
+            var row = $('#pass-new');
+            var passData = {
+                Id: 0,
+                IdSteelSection: sectionId
+            };
+
+            // Собираем данные из полей ввода
+            var valid = true;
+            row.find('input').each(function() {
+                var fieldName = $(this).attr('name');
+                var value = parseFloat($(this).val());
+
+                if (isNaN(value)) {
+                    alert('Поле ' + fieldName + ' должно содержать число');
+                    valid = false;
+                    return false;
+                }
+
+                passData[fieldName] = value;
+            });
+
+            if (!valid) return;
+
+            $.ajax({
+                url: '@Url.Action("SavePass", "Home")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(passData),
+                success: function(response) {
+                    // Удаляем временную строку и добавляем сохраненную
+                    row.remove();
+                    addPassRow(response);
+                },
+                error: function(xhr) {
+                    try {
+                        var error = JSON.parse(xhr.responseText);
+                        if (error && error.errors) {
+                            var errorMsg = '';
+                            for (var key in error.errors) {
+                                errorMsg += error.errors[key].join(', ') + '\n';
+                            }
+                            alert('Ошибка сохранения: ' + errorMsg);
+                        } else {
+                            alert('Ошибка сохранения: ' + xhr.responseText);
+                        }
+                    } catch (e) {
+                        alert('Ошибка сохранения: ' + xhr.responseText);
+                    }
+                }
+            });
+        }
+
+        // Удаление начальных параметров
+        function deleteInitialParam(id) {
+            if (confirm('Вы уверены, что хотите удалить этот набор параметров?')) {
+                $.post('@Url.Action("DeleteInitialParam", "Home")', { id: id }, function() {
+                    $('#initialparam-' + id).remove();
+                    if (selectedInitialParamId === id) {
+                        selectedInitialParamId = 0;
+                    }
+                }).fail(function(xhr) {
+                    alert('Ошибка удаления: ' + xhr.responseText);
+                });
+            }
+        }
+
+        // Удаление стали
+        function deleteSteel(id) {
+            if (confirm('Вы уверены, что хотите удалить эту сталь?')) {
+                $.post('@Url.Action("DeleteSteel", "Home")', { id: id }, function() {
+                    $('#steel-' + id).remove();
+                    if (selectedSteelId === id) {
+                        selectedSteelId = 0;
+                    }
+                }).fail(function(xhr) {
+                    alert('Ошибка удаления: ' + xhr.responseText);
+                });
+            }
+        }
+
+        // Удаление прохода
+        function deletePass(id) {
+            if (confirm('Вы уверены, что хотите удалить этот проход?')) {
+                $.post('@Url.Action("DeletePass", "Home")', { id: id }, function() {
+                    $('#pass-' + id).remove();
+                }).fail(function(xhr) {
+                    alert('Ошибка удаления: ' + xhr.responseText);
+                });
+            }
+        }
+
+        // Обработчик кнопки "Расчеты"
+        $('#calculateButton').click(function() {
+            // Проверяем, что выбраны начальные параметры и сталь
+            if (selectedInitialParamId === 0) {
+                alert('Пожалуйста, выберите набор начальных параметров');
+                return;
+            }
+
+            if (selectedSteelId === 0) {
+                alert('Пожалуйста, выберите сталь');
+                return;
+            }
+
+            // Формируем URL для перехода на страницу результатов
+            var url = '@Url.Action("Results", "Home")' +
+                '?factoryId=' + factoryId +
+                '&millId=' + millId +
+                '&sectionId=' + sectionId +
+                '&initialParamId=' + selectedInitialParamId +
+                '&steelId=' + selectedSteelId;
+
+            window.location.href = url;
+        });
+    </script>
+}

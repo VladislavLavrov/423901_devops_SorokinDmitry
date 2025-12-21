@@ -1,0 +1,317 @@
+﻿@model GlobalContext
+@{
+    ViewData["Title"] = "Результаты расчетов";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">Результаты расчетов</h1>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Выбор метода расчета</h5>
+        </div>
+        <div class="card-body d-flex align-items-center">
+            <select id="calculationMethod" class="form-select me-2" aria-label="Выберите метод расчета" style="width: auto;">
+                <option value="" selected>-- Выберите метод расчета --</option>
+                <option value="Domain">Метод кафедры ОМД УГТУ</option>
+                <option value="DomainSP">Метод соответственной полосы</option>
+            </select>
+            <button id="exportToExcel" class="btn btn-primary" disabled>
+                <i class="bi bi-file-earmark-excel me-1"></i>Скачать отчет в Excel
+            </button>
+            <!-- Скрытое поле для хранения изображения графика -->
+            <input type="hidden" id="chartImageBase64" />
+        </div>
+    </div>
+
+    <div id="resultsContainer" style="display: none;">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Таблица калибровки валков</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>№ клети</th>
+                                <th>Форма калибра</th>
+                                <th>Глубина вреза, мм</th>
+                                <th>Ширина вреза, мм</th>
+                                <th>Зазор, мм</th>
+                                <th>Высота раската, мм</th>
+                                <th>Ширина раската, мм</th>
+                                <th>Площадь сечения, мм²</th>
+                                <th>Длина, мм</th>
+                                <th>Коэф. вытяжки</th>
+                                <th>Угол захвата, °</th>
+                                <th>Диаметр по буртам, мм</th>
+                                <th>Катающий диаметр, мм</th>
+                                <th>Скорость прокатки, м/с</th>
+                                <th>Частота валков, об/мин</th>
+                                <th>Частота двигателя, об/мин</th>
+                                <th>Температура, °C</th>
+                                <th>Усилие, МН</th>
+                                <th>Макс. реакция, МН</th>
+                                <th>Момент прокатки, кН·м</th>
+                                <th>Мощность, кВт</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                            <tr>
+                                <td colspan="21" class="text-center">Для отображения результатов выберите метод расчета</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>График скоростного режима</h5>
+            </div>
+            <div class="card-body">
+                <div style="height: 400px;">
+                    <canvas id="speedChart" width="400" height="200"></canvas>
+                </div>
+                <div class="mt-3">
+                    <div class="d-flex flex-wrap">
+                        <div class="me-3 mb-2">
+                            <span style="display:inline-block; width:15px; height:15px; background-color:rgb(75, 192, 192); margin-right:5px;"></span>
+                            Скорость прокатки (V1)
+                        </div>
+                        <div class="me-3 mb-2">
+                            <span style="display:inline-block; width:15px; height:15px; border:1px dashed rgb(255, 99, 132); margin-right:5px;"></span>
+                            Минимальная скорость (VMIN)
+                        </div>
+                        <div class="me-3 mb-2">
+                            <span style="display:inline-block; width:15px; height:15px; border:1px dashed rgb(54, 162, 235); margin-right:5px;"></span>
+                            Максимальная скорость (VMAX)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        $(document).ready(function() {
+            var speedChart = null;
+
+            $('#calculationMethod').change(function() {
+                var method = $(this).val();
+                if (!method) return;
+
+                // Показываем контейнер с результатами
+                $('#resultsContainer').show();
+
+                // Показываем индикатор загрузки
+                $('#resultsTableBody').html('<tr><td colspan="21" class="text-center">Выполняется расчет...</td></tr>');
+
+                // Отправляем запрос на сервер для выполнения расчетов
+                $.ajax({
+                    url: '@Url.Action("CalculateResults", "Home")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        FactoryId: @Model.Factory.Id,
+                        MillId: @Model.RollingMill.Id,
+                        SectionId: @Model.SteelSection.Id,
+                        InitialParamId: @Model.InitialParameters.Id,
+                        SteelId: @Model.Steel.Id,
+                        CalculationMethod: method
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            // Заполняем таблицу
+                            var tableBody = $('#resultsTableBody');
+                            tableBody.empty();
+
+                            response.passes.forEach(function(pass) {
+                                var row = $('<tr>');
+
+                                // Определяем, какой метод был выбран для отображения соответствующих параметров
+                                var isDomain = method === 'Domain';
+
+                                row.append($('<td>').text(pass.passNumber));
+                                row.append($('<td>').text(getSchemaCaliberName(pass.schemaCaliber)));
+                                row.append($('<td>').text(pass.hvr ? pass.hvr.toFixed(2) : '-'));
+                                row.append($('<td>').text(pass.bk ? pass.bk.toFixed(2) : '-'));
+                                row.append($('<td>').text(pass.s ? pass.s.toFixed(2) : '-'));
+                                row.append($('<td>').text(pass.h1 ? pass.h1.toFixed(2) : '-'));
+                                row.append($('<td>').text(pass.b1 ? pass.b1.toFixed(2) : '-'));
+                                row.append($('<td>').text(pass.wr ? pass.wr.toFixed(2) : '-'));
+                                row.append($('<td>').text(pass.lod ? pass.lod.toFixed(2) : '-'));
+                                row.append($('<td>').text(pass.kvitr ? pass.kvitr.toFixed(2) : '-'));
+                                row.append($('<td>').text(pass.ugzax ? pass.ugzax.toFixed(2) : '-'));
+                                row.append($('<td>').text(pass.dd ? pass.dd.toFixed(2) : '-'));
+                                row.append($('<td>').text(pass.dk ? pass.dk.toFixed(2) : '-'));
+                                row.append($('<td>').text(pass.v1 ? pass.v1.toFixed(2) : '-'));
+                                row.append($('<td>').text(pass.nr ? pass.nr.toFixed(2) : '-'));
+                                row.append($('<td>').text(pass.ndvr ? pass.ndvr.toFixed(2) : '-'));
+                                row.append($('<td>').text(pass.tsr ? pass.tsr.toFixed(2) : '-'));
+                                row.append($('<td>').text(isDomain ? (pass.p1p ? pass.p1p.toFixed(2) : '-') : (pass.p1spp ? pass.p1spp.toFixed(2) : '-')));
+                                row.append($('<td>').text(isDomain ? (pass.rp ? pass.rp.toFixed(2) : '-') : (pass.rspp ? pass.rspp.toFixed(2) : '-')));
+                                row.append($('<td>').text(isDomain ? (pass.mprp ? pass.mprp.toFixed(2) : '-') : (pass.mprspp ? pass.mprspp.toFixed(2) : '-')));
+                                row.append($('<td>').text(isDomain ? (pass.nprp ? pass.nprp.toFixed(2) : '-') : (pass.npspp ? pass.npspp.toFixed(2) : '-')));
+
+                                tableBody.append(row);
+                            });
+
+                            // Строим график
+                            buildSpeedChart(response.passes);
+
+                            // Активируем кнопку экспорта
+                            $('#exportToExcel').prop('disabled', false);
+
+                        } else {
+                            $('#resultsTableBody').html('<tr><td colspan="21" class="text-center text-danger">Ошибка при выполнении расчетов</td></tr>');
+                        }
+                    },
+                    error: function() {
+                        $('#resultsTableBody').html('<tr><td colspan="21" class="text-center text-danger">Ошибка при выполнении запроса</td></tr>');
+                    }
+                });
+            });
+
+            function getSchemaCaliberName(schemaCode) {
+                // Отображение названий форм калибров в зависимости от кода
+                const schemaNames = {
+                    1: "Гладкая бочка",
+                    2: "Круглый",
+                    3: "Квадратный",
+                    4: "Овальный",
+                    5: "Пл. овальный",
+                    6: "Шестиугольный",
+                    7: "Ромбический",
+                    8: "Ящичный",
+                    9: "Ребр. овальный",
+                    10: "Шестигранный",
+                    11: "Ребровой"
+                };
+                return schemaNames[schemaCode] || "Неизвестно (" + schemaCode + ")";
+            }
+
+            function buildSpeedChart(passes) {
+                var ctx = document.getElementById('speedChart').getContext('2d');
+
+                // Если график уже существует, уничтожаем его
+                if (speedChart) {
+                    speedChart.destroy();
+                }
+
+                // Подготовка данных для графика
+                var labels = passes.map(function(p) { return p.passNumber; });
+                var v1Data = passes.map(function(p) { return p.v1; });
+                var vminData = passes.map(function(p) { return p.vmin; });
+                var vmaxData = passes.map(function(p) { return p.vmax; });
+
+                speedChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Скорость прокатки (V1)',
+                                data: v1Data,
+                                borderColor: 'rgb(75, 192, 192)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                                borderWidth: 2,
+                                tension: 0.1,
+                                fill: true
+                            },
+                            {
+                                label: 'Минимальная скорость (VMIN)',
+                                data: vminData,
+                                borderColor: 'rgb(255, 99, 132)',
+                                borderDash: [5, 5],
+                                borderWidth: 1.5,
+                                tension: 0.1,
+                                fill: false
+                            },
+                            {
+                                label: 'Максимальная скорость (VMAX)',
+                                data: vmaxData,
+                                borderColor: 'rgb(54, 162, 235)',
+                                borderDash: [5, 5],
+                                borderWidth: 1.5,
+                                tension: 0.1,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Номер клети (прохода)'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Скорость, м/с'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Обработчик кнопки экспорта
+            $('#exportToExcel').click(function() {
+                var method = $('#calculationMethod').val();
+                if (!method) return;
+
+                // Получаем изображение графика
+                var chartImage = $('#speedChart').get(0).toDataURL("image/png");
+                $('#chartImageBase64').val(chartImage);
+
+                // Отправляем запрос на экспорт
+                $.ajax({
+                    url: '@Url.Action("ExportToExcel", "Home")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        FactoryId: @Model.Factory.Id,
+                        MillId: @Model.RollingMill.Id,
+                        SectionId: @Model.SteelSection.Id,
+                        InitialParamId: @Model.InitialParameters.Id,
+                        SteelId: @Model.Steel.Id,
+                        CalculationMethod: method,
+                        ChartImageBase64: $('#chartImageBase64').val()
+                    }),
+                    xhrFields: {
+                        responseType: 'blob'
+                    },
+                    success: function(blob) {
+                        // Создаем ссылку для скачивания
+                        var url = window.URL.createObjectURL(blob);
+                        var a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'Результаты_расчета_' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.xlsx';
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        window.URL.revokeObjectURL(url);
+                    },
+                    error: function(xhr) {
+                        alert('Ошибка при экспорте в Excel: ' + xhr.statusText);
+                    }
+                });
+            });
+        });
+    </script>
+}

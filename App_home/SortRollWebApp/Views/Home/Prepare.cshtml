@@ -1,0 +1,1001 @@
+﻿@{
+    ViewData["Title"] = "Подготовка данных";
+}
+
+<style>
+    /* Стили для таблицы */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type="number"] {
+        -moz-appearance: textfield;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .table input.form-control {
+        padding: 0.25rem;
+        height: 30px;
+        font-size: 0.875rem;
+    }
+
+    .table td {
+        padding: 0.3rem;
+        vertical-align: middle;
+    }
+
+    .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+        margin: 1px;
+    }
+
+    .view-mode, .edit-mode {
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+        .view-mode .btn, .edit-mode .btn {
+            margin: 0 2px;
+            display: inline-block;
+        }
+
+    .input-group-append .btn {
+        margin-left: 5px;
+    }
+</style>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="form-group">
+            <label>Завод:</label>
+            <div class="input-group">
+                <select id="factorySelect" class="form-control" asp-items="ViewBag.Factories">
+                    <option value="">-- Выберите завод --</option>
+                </select>
+                <div class="input-group-append">
+                    <button class="btn btn-outline-primary" type="button" onclick="openAddFactoryModal()">+</button>
+                    <button class="btn btn-outline-secondary" type="button" onclick="openEditFactoryModal()">✎</button>
+                    <button class="btn btn-outline-danger" type="button" onclick="openDeleteFactoryModal()">✕</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="form-group">
+            <label>Стан:</label>
+            <div class="input-group">
+                <select id="millSelect" class="form-control">
+                    <option value="">-- Выберите стан --</option>
+                </select>
+                <div class="input-group-append">
+                    <button class="btn btn-outline-primary" type="button" onclick="openAddMillModal()">+</button>
+                    <button class="btn btn-outline-secondary" type="button" onclick="openEditMillModal()">✎</button>
+                    <button class="btn btn-outline-danger" type="button" onclick="openDeleteMillModal()">✕</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="form-group">
+            <label>Профиль:</label>
+            <div class="input-group">
+                <select id="sectionSelect" class="form-control">
+                    <option value="">-- Выберите профиль --</option>
+                </select>
+                <div class="input-group-append">
+                    <button class="btn btn-outline-primary" type="button" onclick="openAddSectionModal()">+</button>
+                    <button class="btn btn-outline-secondary" type="button" onclick="openEditSectionModal()">✎</button>
+                    <button class="btn btn-outline-danger" type="button" onclick="openDeleteSectionModal()">✕</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="rollingStandsContainer" class="mt-4" style="display: none;">
+    <h4>Характеристики клетей стана</h4>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Номер</th>
+                    <th>DB</th>
+                    <th>DSH</th>
+                    <th>MU</th>
+                    <th>FPOD</th>
+                    <th>LKL</th>
+                    <th>AKL</th>
+                    <th>IR</th>
+                    <th>ETA</th>
+                    <th>NZ</th>
+                    <th>NNOM</th>
+                    <th>NDVN</th>
+                    <th>NDVMIN</th>
+                    <th>NDVMAX</th>
+                    <th>PP</th>
+                    <th>PDOP</th>
+                    <th>MDOP</th>
+                    <th>C</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody id="standsTableBody">
+                <!-- Строки будут добавляться динамически -->
+            </tbody>
+        </table>
+    </div>
+    <button id="addStandButton" class="btn btn-primary mt-3">Добавить клеть</button>
+</div>
+
+<div class="mt-4">
+    <button id="proceedBtn" class="btn btn-success" disabled>
+        Перейти к калибровке валков
+    </button>
+</div>
+
+<!-- Модальные окна для управления заводами -->
+<div class="modal fade" id="factoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="factoryModalTitle">Добавить завод</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="factoryId">
+                <div class="form-group">
+                    <label for="factoryName">Название завода:</label>
+                    <input type="text" class="form-control" id="factoryName">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="saveFactory()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteFactoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Удаление завода</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить завод "<span id="deleteFactoryName"></span>"?</p>
+                <p class="text-danger">Внимание: это действие также удалит все связанные станы и профили!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteFactory()">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальные окна для управления станами -->
+<div class="modal fade" id="millModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="millModalTitle">Добавить стан</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="millId">
+                <input type="hidden" id="millFactory"> <!-- Скрытое поле для выбранного завода -->
+                <div class="form-group">
+                    <label for="millName">Название стана:</label>
+                    <input type="text" class="form-control" id="millName">
+                </div>
+                <div class="form-group mt-2">
+                    @* <label>Завод: <span id="selectedFactoryName"></span></label> *@
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="saveMill()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteMillModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Удаление стана</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить стан "<span id="deleteMillName"></span>"?</p>
+                <p class="text-danger">Внимание: это действие также удалит все связанные профили и клети!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteMill()">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальные окна для управления профилями -->
+<div class="modal fade" id="sectionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="sectionModalTitle">Добавить профиль</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="sectionId">
+                <input type="hidden" id="sectionMill"> <!-- Скрытое поле для выбранного стана -->
+                <div class="form-group">
+                    <label for="sectionName">Название профиля:</label>
+                    <input type="text" class="form-control" id="sectionName">
+                </div>
+                <div class="form-group mt-2">
+                    <label for="sectionDescription">Описание:</label>
+                    <textarea class="form-control" id="sectionDescription"></textarea>
+                </div>
+                <div class="form-group mt-2">
+                    @* <label>Стан: <span id="selectedMillName"></span></label> *@
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="saveSection()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteSectionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Удаление профиля</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить профиль "<span id="deleteSectionName"></span>"?</p>
+                <p class="text-danger">Внимание: это действие также удалит все связанные данные прокатки!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteSection()">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для подтверждения удаления клети -->
+<div class="modal fade" id="deleteStandModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Удаление клети</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить эту клеть?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteStand()">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript">
+        // Глобальные переменные для хранения выбранных элементов
+        var selectedStandId = 0;
+
+        // Функция для проверки состояния всех выпадающих списков
+        function checkSelections() {
+            var factoryId = $('#factorySelect').val();
+            var millId = $('#millSelect').val();
+            var sectionId = $('#sectionSelect').val();
+            var proceedBtn = $('#proceedBtn');
+
+            if (factoryId && millId && sectionId) {
+                var url = '@Url.Action("Passes", "Home")' +
+                    `?factoryId=${factoryId}&millId=${millId}&sectionId=${sectionId}`;
+                proceedBtn.prop('disabled', false).off('click').on('click', function() {
+                    window.location.href = url;
+                });
+            } else {
+                proceedBtn.prop('disabled', true).off('click');
+            }
+        }
+
+        // При выборе завода
+        $('#factorySelect').change(function () {
+            var id = $(this).val();
+
+            $('#millSelect').empty().append('<option value="">-- Выберите стан --</option>');
+            $('#sectionSelect').empty().append('<option value="">-- Выберите профиль --</option>');
+            $('#rollingStandsContainer').hide();
+            $('#standsTableBody').empty();
+
+            if (id) {
+                $.getJSON('@Url.Action("GetRollingMills", "Home")', { id: id }, function (mills) {
+                    $.each(mills, function (i, mill) {
+                        $('#millSelect').append($('<option>', {
+                            value: mill.id,
+                            text: mill.name
+                        }));
+                    });
+                    checkSelections();
+                });
+            } else {
+                checkSelections();
+            }
+        });
+
+        // При выборе стана
+        $('#millSelect').change(function () {
+            var id = $(this).val();
+
+            $('#sectionSelect').empty().append('<option value="">-- Выберите профиль --</option>');
+            $('#rollingStandsContainer').hide();
+            $('#standsTableBody').empty();
+
+            if (id) {
+                $.getJSON('@Url.Action("GetSteelSections", "Home")', { id: id }, function (sections) {
+                    $.each(sections, function (i, section) {
+                        $('#sectionSelect').append($('<option>', {
+                            value: section.id,
+                            text: section.name
+                        }));
+                    });
+                    checkSelections();
+
+                    // Загружаем таблицу клетей
+                    loadStandsTable(id);
+                    $('#rollingStandsContainer').show();
+                });
+            } else {
+                checkSelections();
+            }
+        });
+
+        // При выборе профиля
+        $('#sectionSelect').change(function () {
+            checkSelections();
+        });
+
+        // Загрузка таблицы клетей
+        function loadStandsTable(millId) {
+            $.getJSON('@Url.Action("GetRollingStands", "Home")', { millId: millId }, function (stands) {
+                $('#standsTableBody').empty();
+                stands.forEach(function (stand) {
+                    addStandRow(stand);
+                });
+            });
+        }
+
+        // Добавление строки клети
+        function addStandRow(stand) {
+            var isNew = stand.id === 0;
+            var rowId = isNew ? 'stand-new' : 'stand-' + stand.id;
+
+            var row = '<tr id="' + rowId + '" data-mill-id="' + stand.idRollingMill + '">';
+
+            // Добавляем ячейки с данными
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="Number" step="1" value="0" />' : stand.number) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="DB" step="0.001" value="0" />' : stand.db.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="DSH" step="0.001" value="0" />' : stand.dsh.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="MU" step="0.001" value="0" />' : stand.mu.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="FPOD" step="0.001" value="0" />' : stand.fpod.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="LKL" step="0.001" value="0" />' : stand.lkl.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="AKL" step="0.001" value="0" />' : stand.akl.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="IR" step="0.001" value="0" />' : stand.ir.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="ETA" step="0.001" value="0" />' : stand.eta.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="NZ" step="0.001" value="0" />' : stand.nz.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="NNOM" step="0.001" value="0" />' : stand.nnom.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="NDVN" step="0.001" value="0" />' : stand.ndvn.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="NDVMIN" step="0.001" value="0" />' : stand.ndvmin.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="NDVMAX" step="0.001" value="0" />' : stand.ndvmax.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="PP" step="0.001" value="0" />' : stand.pp.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="PDOP" step="0.001" value="0" />' : stand.pdop.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="MDOP" step="0.001" value="0" />' : stand.mdop.toFixed(3)) + '</td>';
+            row += '<td>' + (isNew ? '<input type="number" class="form-control" name="C" step="0.001" value="0" />' : stand.c.toFixed(3)) + '</td>';
+
+            // Добавляем кнопки действий
+            row += '<td>';
+            if (isNew) {
+                row += '<button class="btn btn-success btn-sm" onclick="saveNewStand()">Сохранить</button>';
+            } else {
+                row += '<div class="view-mode">';
+                row += '<button class="btn btn-warning btn-sm" onclick="enableEdit(' + stand.id + ')">Изменить</button>';
+                row += '<button class="btn btn-danger btn-sm" onclick="showDeleteStandModal(' + stand.id + ')">Удалить</button>';
+                row += '</div>';
+                row += '<div class="edit-mode" style="display:none">';
+                row += '<button class="btn btn-success btn-sm" onclick="saveStand(' + stand.id + ')">Сохранить</button>';
+                row += '</div>';
+            }
+            row += '</td>';
+
+            row += '</tr>';
+
+            $('#standsTableBody').append(row);
+        }
+
+        // Добавление новой клети
+        $('#addStandButton').click(function() {
+            var millId = $('#millSelect').val();
+            var newStand = {
+                id: 0,
+                idRollingMill: parseInt(millId),
+                number: 0,
+                db: 0,
+                dsh: 0,
+                mu: 0,
+                fpod: 0,
+                lkl: 0,
+                akl: 0,
+                ir: 0,
+                eta: 0,
+                nz: 0,
+                nnom: 0,
+                ndvn: 0,
+                ndvmin: 0,
+                ndvmax: 0,
+                pp: 0,
+                pdop: 0,
+                mdop: 0,
+                c: 0
+            };
+            addStandRow(newStand);
+        });
+
+        // Включение режима редактирования
+        function enableEdit(id) {
+            var row = $('#stand-' + id);
+            row.find('.view-mode').hide();
+            row.find('.edit-mode').show();
+
+            // Заменяем текст на поля ввода
+            row.find('td:not(:last-child)').each(function(index) {
+                var value = $.trim($(this).text());
+                if (value === '') value = '0';
+
+                var fieldNames = ['Number', 'DB', 'DSH', 'MU', 'FPOD', 'LKL', 'AKL', 'IR', 'ETA', 'NZ', 'NNOM', 'NDVN', 'NDVMIN', 'NDVMAX', 'PP', 'PDOP', 'MDOP', 'C'];
+                var fieldName = fieldNames[index];
+
+                var inputHtml = '<input type="number" class="form-control" name="' + fieldName + '" ';
+                inputHtml += 'step="' + (fieldName === 'Number' ? '1' : '0.001') + '" ';
+                inputHtml += 'value="' + value + '" />';
+
+                $(this).html(inputHtml);
+            });
+        }
+
+        // Сохранение изменений
+        function saveStand(id) {
+            var row = $('#stand-' + id);
+            var standData = {
+                Id: id,
+                IdRollingMill: row.data('mill-id')
+            };
+
+            // Собираем данные из полей ввода
+            var valid = true;
+            row.find('input').each(function() {
+                var fieldName = $(this).attr('name');
+                var value = parseFloat($(this).val());
+
+                if (isNaN(value)) {
+                    alert('Поле ' + fieldName + ' должно содержать число');
+                    valid = false;
+                    return false;
+                }
+
+                standData[fieldName] = value;
+            });
+
+            if (!valid) return;
+
+            $.ajax({
+                url: '@Url.Action("SaveRollingStand", "Home")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(standData),
+                success: function(response) {
+                    // Удаляем старую строку и добавляем обновленную
+                    row.remove();
+                    addStandRow(response);
+                },
+                error: function(xhr) {
+                    try {
+                        var error = JSON.parse(xhr.responseText);
+                        if (error && error.errors) {
+                            var errorMsg = '';
+                            for (var key in error.errors) {
+                                errorMsg += error.errors[key].join(', ') + '\n';
+                            }
+                            alert('Ошибка сохранения: ' + errorMsg);
+                        } else {
+                            alert('Ошибка сохранения: ' + xhr.responseText);
+                        }
+                    } catch (e) {
+                        alert('Ошибка сохранения: ' + xhr.responseText);
+                    }
+                }
+            });
+        }
+
+        // Сохранение новой клети
+        function saveNewStand() {
+            var row = $('#stand-new');
+            var standData = {
+                Id: 0,
+                IdRollingMill: row.data('mill-id')
+            };
+
+            // Собираем данные из полей ввода
+            var valid = true;
+            row.find('input').each(function() {
+                var fieldName = $(this).attr('name');
+                var value = parseFloat($(this).val());
+
+                if (isNaN(value)) {
+                    alert('Поле ' + fieldName + ' должно содержать число');
+                    valid = false;
+                    return false;
+                }
+
+                standData[fieldName] = value;
+            });
+
+            if (!valid) return;
+
+            $.ajax({
+                url: '@Url.Action("SaveRollingStand", "Home")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(standData),
+                success: function(response) {
+                    // Удаляем временную строку и добавляем сохраненную
+                    row.remove();
+                    addStandRow(response);
+                },
+                error: function(xhr) {
+                    try {
+                        var error = JSON.parse(xhr.responseText);
+                        if (error && error.errors) {
+                            var errorMsg = '';
+                            for (var key in error.errors) {
+                                errorMsg += error.errors[key].join(', ') + '\n';
+                            }
+                            alert('Ошибка сохранения: ' + errorMsg);
+                        } else {
+                            alert('Ошибка сохранения: ' + xhr.responseText);
+                        }
+                    } catch (e) {
+                        alert('Ошибка сохранения: ' + xhr.responseText);
+                    }
+                }
+            });
+        }
+
+        // Показать модальное окно удаления клети
+        function showDeleteStandModal(id) {
+            selectedStandId = id;
+            $('#deleteStandModal').modal('show');
+        }
+
+        // Подтверждение удаления клети
+        function confirmDeleteStand() {
+            $('#deleteStandModal').modal('hide');
+
+            $.post('@Url.Action("DeleteRollingStand", "Home")', { id: selectedStandId }, function() {
+                $('#stand-' + selectedStandId).remove();
+            }).fail(function(xhr) {
+                alert('Ошибка удаления: ' + xhr.responseText);
+            });
+        }
+
+        // Функции для работы с заводами
+        function openAddFactoryModal() {
+            $('#factoryModalTitle').text('Добавить завод');
+            $('#factoryId').val(0);
+            $('#factoryName').val('');
+            $('#factoryModal').modal('show');
+        }
+
+        function openEditFactoryModal() {
+            var selectedId = $('#factorySelect').val();
+            if (!selectedId) {
+                alert('Выберите завод для редактирования');
+                return;
+            }
+
+            var selectedText = $('#factorySelect option:selected').text();
+            $('#factoryModalTitle').text('Редактировать завод');
+            $('#factoryId').val(selectedId);
+            $('#factoryName').val(selectedText);
+            $('#factoryModal').modal('show');
+        }
+
+        function openDeleteFactoryModal() {
+            var selectedId = $('#factorySelect').val();
+            if (!selectedId) {
+                alert('Выберите завод для удаления');
+                return;
+            }
+
+            var selectedText = $('#factorySelect option:selected').text();
+            $('#deleteFactoryName').text(selectedText);
+            $('#deleteFactoryModal').modal('show');
+        }
+
+        // Функция сохранения завода
+        function saveFactory() {
+            var id = $('#factoryId').val();
+            var name = $('#factoryName').val();
+
+            if (!name) {
+                alert('Введите название завода');
+                return;
+            }
+
+            $.post('@Url.Action("SaveFactory", "Home")', { id: id, name: name }, function(response) {
+                $('#factoryModal').modal('hide');
+
+                // Обновляем список заводов
+                $.getJSON('@Url.Action("GetFactories", "Home")', function(factories) {
+                    $('#factorySelect').empty().append('<option value="">-- Выберите завод --</option>');
+
+                    $.each(factories, function(i, factory) {
+                        $('#factorySelect').append($('<option>', {
+                            value: factory.id,
+                            text: factory.name
+                        }));
+                    });
+
+                    // Устанавливаем только что добавленный завод как выбранный
+                    if (id == 0) {
+                        // Для нового завода ищем его по имени
+                        $('#factorySelect option').filter(function() {
+                            return $(this).text() === name;
+                        }).prop('selected', true);
+                    } else {
+                        // Для редактирования выбираем по ID
+                        $('#factorySelect').val(id);
+                    }
+
+                    // Обновляем зависимые списки
+                    $('#factorySelect').change();
+                });
+            }).fail(function(xhr) {
+                alert('Ошибка сохранения: ' + xhr.responseText);
+            });
+        }
+
+        function confirmDeleteFactory() {
+            var id = $('#factorySelect').val();
+
+            $.post('@Url.Action("DeleteFactory", "Home")', { id: id }, function() {
+                $('#deleteFactoryModal').modal('hide');
+                // Обновляем список заводов
+                $.getJSON('@Url.Action("GetFactories", "Home")', function(factories) {
+                    $('#factorySelect').empty().append('<option value="">-- Выберите завод --</option>');
+                    $.each(factories, function(i, factory) {
+                        $('#factorySelect').append($('<option>', {
+                            value: factory.id,
+                            text: factory.name
+                        }));
+                    });
+                    // Сбрасываем зависимые списки
+                    $('#millSelect').empty().append('<option value="">-- Выберите стан --</option>');
+                    $('#sectionSelect').empty().append('<option value="">-- Выберите профиль --</option>');
+                    $('#rollingStandsContainer').hide();
+                    checkSelections();
+                });
+            }).fail(function(xhr) {
+                alert('Ошибка удаления: ' + xhr.responseText);
+            });
+        }
+
+        // Функция открытия модального окна для добавления стана
+        function openAddMillModal() {
+            var selectedFactoryId = $('#factorySelect').val();
+            var selectedFactoryName = $('#factorySelect option:selected').text();
+
+            if (!selectedFactoryId) {
+                alert('Сначала выберите завод');
+                return;
+            }
+
+            $('#millModalTitle').text('Добавить стан');
+            $('#millId').val(0);
+            $('#millName').val('');
+            $('#millFactory').val(selectedFactoryId);
+            $('#selectedFactoryName').text(selectedFactoryName);
+            $('#millModal').modal('show');
+        }
+
+        function openAddSectionModal() {
+            var selectedMillId = $('#millSelect').val();
+            var selectedMillName = $('#millSelect option:selected').text();
+
+            if (!selectedMillId) {
+                alert('Сначала выберите стан');
+                return;
+            }
+
+            $('#sectionModalTitle').text('Добавить профиль');
+            $('#sectionId').val(0);
+            $('#sectionName').val('');
+            $('#sectionDescription').val('');
+            $('#sectionMill').val(selectedMillId);
+            $('#selectedMillName').text(selectedMillName);
+            $('#sectionModal').modal('show');
+        }
+
+        function openEditMillModal() {
+            var selectedId = $('#millSelect').val();
+            if (!selectedId) {
+                alert('Выберите стан для редактирования');
+                return;
+            }
+
+            // Загружаем список заводов для выбора
+            $.getJSON('@Url.Action("GetFactories", "Home")', function(factories) {
+                $('#millFactory').empty().append('<option value="">-- Выберите завод --</option>');
+                $.each(factories, function(i, factory) {
+                    $('#millFactory').append($('<option>', {
+                        value: factory.id,
+                        text: factory.name
+                    }));
+                });
+
+                // Загружаем данные стана
+                $.getJSON('@Url.Action("GetMill", "Home")', { id: selectedId }, function(mill) {
+                    $('#millModalTitle').text('Редактировать стан');
+                    $('#millId').val(mill.id);
+                    $('#millName').val(mill.name);
+                    $('#millFactory').val(mill.idFactory);
+                    $('#millModal').modal('show');
+                });
+            });
+        }
+
+        function openDeleteMillModal() {
+            var selectedId = $('#millSelect').val();
+            if (!selectedId) {
+                alert('Выберите стан для удаления');
+                return;
+            }
+
+            var selectedText = $('#millSelect option:selected').text();
+            $('#deleteMillName').text(selectedText);
+            $('#deleteMillModal').modal('show');
+        }
+
+        // Функция сохранения стана
+        function saveMill() {
+            var id = $('#millId').val();
+            var name = $('#millName').val();
+            var factoryId = $('#millFactory').val();
+
+            if (!name) {
+                alert('Введите название стана');
+                return;
+            }
+
+            if (!factoryId) {
+                alert('Выберите завод');
+                return;
+            }
+
+            $.post('@Url.Action("SaveMill", "Home")', { id: id, name: name, factoryId: factoryId }, function() {
+                $('#millModal').modal('hide');
+
+                // Обновляем список станов
+                var currentFactoryId = $('#factorySelect').val();
+                if (currentFactoryId) {
+                    $.getJSON('@Url.Action("GetRollingMills", "Home")', { id: currentFactoryId }, function(mills) {
+                        $('#millSelect').empty().append('<option value="">-- Выберите стан --</option>');
+
+                        $.each(mills, function(i, mill) {
+                            $('#millSelect').append($('<option>', {
+                                value: mill.id,
+                                text: mill.name
+                            }));
+                        });
+
+                        // Устанавливаем только что добавленный стан как выбранный
+                        if (id == 0) {
+                            $('#millSelect option').filter(function() {
+                                return $(this).text() === name;
+                            }).prop('selected', true);
+                        } else {
+                            $('#millSelect').val(id);
+                        }
+
+                        // Обновляем зависимые списки
+                        $('#millSelect').change();
+                    });
+                }
+            }).fail(function(xhr) {
+                alert('Ошибка сохранения: ' + xhr.responseText);
+            });
+        }
+
+
+        function confirmDeleteMill() {
+            var id = $('#millSelect').val();
+
+            $.post('@Url.Action("DeleteMill", "Home")', { id: id }, function() {
+                $('#deleteMillModal').modal('hide');
+                // Обновляем список станов
+                var currentFactoryId = $('#factorySelect').val();
+                if (currentFactoryId) {
+                    $.getJSON('@Url.Action("GetRollingMills", "Home")', { id: currentFactoryId }, function(mills) {
+                        $('#millSelect').empty().append('<option value="">-- Выберите стан --</option>');
+                        $.each(mills, function(i, mill) {
+                            $('#millSelect').append($('<option>', {
+                                value: mill.id,
+                                text: mill.name
+                            }));
+                        });
+                        // Сбрасываем зависимые списки
+                        $('#sectionSelect').empty().append('<option value="">-- Выберите профиль --</option>');
+                        $('#rollingStandsContainer').hide();
+                        checkSelections();
+                    });
+                }
+            }).fail(function(xhr) {
+                alert('Ошибка удаления: ' + xhr.responseText);
+            });
+        }
+
+        // Функция открытия модального окна для добавления профиля
+        function openAddSectionModal() {
+            var selectedMillId = $('#millSelect').val();
+
+            if (!selectedMillId) {
+                alert('Сначала выберите стан');
+                return;
+            }
+
+            $('#sectionModalTitle').text('Добавить профиль');
+            $('#sectionId').val(0);
+            $('#sectionName').val('');
+            $('#sectionDescription').val('');
+            $('#sectionMill').val(selectedMillId); // Устанавливаем выбранный стан
+            $('#sectionModal').modal('show');
+        }
+
+        function openEditSectionModal() {
+            var selectedId = $('#sectionSelect').val();
+            if (!selectedId) {
+                alert('Выберите профиль для редактирования');
+                return;
+            }
+
+            // Загружаем список станов для выбора
+            var factoryId = $('#factorySelect').val();
+            $.getJSON('@Url.Action("GetRollingMills", "Home")', { id: factoryId }, function(mills) {
+                $('#sectionMill').empty().append('<option value="">-- Выберите стан --</option>');
+                $.each(mills, function(i, mill) {
+                    $('#sectionMill').append($('<option>', {
+                        value: mill.id,
+                        text: mill.name
+                    }));
+                });
+
+                // Загружаем данные профиля
+                $.getJSON('@Url.Action("GetSection", "Home")', { id: selectedId }, function(section) {
+                    $('#sectionModalTitle').text('Редактировать профиль');
+                    $('#sectionId').val(section.id);
+                    $('#sectionName').val(section.name);
+                    $('#sectionDescription').val(section.description);
+                    $('#sectionMill').val(section.idRollingMill);
+                    $('#sectionModal').modal('show');
+                });
+            });
+        }
+
+        function openDeleteSectionModal() {
+            var selectedId = $('#sectionSelect').val();
+            if (!selectedId) {
+                alert('Выберите профиль для удаления');
+                return;
+            }
+
+            var selectedText = $('#sectionSelect option:selected').text();
+            $('#deleteSectionName').text(selectedText);
+            $('#deleteSectionModal').modal('show');
+        }
+
+        // Функция сохранения профиля
+        function saveSection() {
+            var id = $('#sectionId').val();
+            var name = $('#sectionName').val();
+            var description = $('#sectionDescription').val();
+            var millId = $('#sectionMill').val();
+
+            if (!name) {
+                alert('Введите название профиля');
+                return;
+            }
+
+            if (!millId) {
+                alert('Выберите стан');
+                return;
+            }
+
+            $.post('@Url.Action("SaveSection", "Home")', { id: id, name: name, description: description, millId: millId }, function() {
+                $('#sectionModal').modal('hide');
+
+                // Обновляем список профилей
+                var currentMillId = $('#millSelect').val();
+                if (currentMillId) {
+                    $.getJSON('@Url.Action("GetSteelSections", "Home")', { id: currentMillId }, function(sections) {
+                        $('#sectionSelect').empty().append('<option value="">-- Выберите профиль --</option>');
+
+                        $.each(sections, function(i, section) {
+                            $('#sectionSelect').append($('<option>', {
+                                value: section.id,
+                                text: section.name
+                            }));
+                        });
+
+                        // Устанавливаем только что добавленный профиль как выбранный
+                        if (id == 0) {
+                            $('#sectionSelect option').filter(function() {
+                                return $(this).text() === name;
+                            }).prop('selected', true);
+                        } else {
+                            $('#sectionSelect').val(id);
+                        }
+
+                        checkSelections();
+                    });
+                }
+            }).fail(function(xhr) {
+                alert('Ошибка сохранения: ' + xhr.responseText);
+            });
+        }
+
+        function confirmDeleteSection() {
+            var id = $('#sectionSelect').val();
+
+            $.post('@Url.Action("DeleteSection", "Home")', { id: id }, function() {
+                $('#deleteSectionModal').modal('hide');
+                // Обновляем список профилей
+                var currentMillId = $('#millSelect').val();
+                if (currentMillId) {
+                    $.getJSON('@Url.Action("GetSteelSections", "Home")', { id: currentMillId }, function(sections) {
+                        $('#sectionSelect').empty().append('<option value="">-- Выберите профиль --</option>');
+                        $.each(sections, function(i, section) {
+                            $('#sectionSelect').append($('<option>', {
+                                value: section.id,
+                                text: section.name
+                            }));
+                        });
+                        checkSelections();
+                    });
+                }
+            }).fail(function(xhr) {
+                alert('Ошибка удаления: ' + xhr.responseText);
+            });
+        }
+
+        checkSelections();
+    </script>
+}

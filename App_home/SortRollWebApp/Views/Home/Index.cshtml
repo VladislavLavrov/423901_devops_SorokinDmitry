@@ -1,0 +1,78 @@
+﻿@model IEnumerable<string>
+@{
+    ViewBag.Title = "Добро пожаловать!";
+}
+
+<h2>@ViewBag.Title</h2>
+
+<p>
+    @* Пользователей на сайте:
+    @if (Model != null && Model.Any())
+    {
+        <em></em>
+        <ul>
+            @foreach (var login in Model)
+            {
+                <li>@login</li>
+            }
+        </ul>
+    }
+    else
+    {
+        <em>Нет активных пользователей.</em>
+    } *@
+</p>
+
+<p class ="mt-4">
+    <!-- Кнопка перехода к расчётам с обработкой клика -->
+    <button id="goToCalculations" class="btn btn-success">
+        Перейти к расчетам процесса сортовой прокатки
+    </button>
+</p>
+
+<!-- Модальное окно для отображения ошибок -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ошибка</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="errorMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#goToCalculations').click(function() {
+                // Проверяем подключение к базе данных
+                $.ajax({
+                    url: '@Url.Action("CheckDatabaseConnection", "Home")',
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.connected) {
+                            // База данных подключена, переходим на страницу
+                            window.location.href = '@Url.Action("Prepare", "Home")';
+                        } else {
+                            // Показываем ошибку подключения
+                            $('#errorMessage').text('Не подключена база данных!');
+                            $('#errorModal').modal('show');
+                        }
+                    },
+                    error: function() {
+                        // Показываем ошибку подключения
+                        $('#errorMessage').text('Не подключена база данных!');
+                        $('#errorModal').modal('show');
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,7 @@
+services:
+ web:
+  container_name: sort-roll-app-jenkins-15
+  hostname: app
+  build: .
+  ports:
+   - "0.0.0.0:5515:5515"
