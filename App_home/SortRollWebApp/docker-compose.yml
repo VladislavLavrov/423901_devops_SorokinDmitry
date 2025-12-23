@@ -4,4 +4,5 @@ services:
   hostname: app
   build: .
   ports:
-   - "0.0.0.0:5515:5315"
+   - "5315:5315"
+  network_mode: bridge
